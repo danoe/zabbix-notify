@@ -9,7 +9,7 @@ WriteMakefile(
     AUTHOR       => 'vzhuravlev ()',
     ABSTRACT     => 'Send messages from Zabbix to Slack, HipChat or PagerDuty',
     PREREQ_PM    => {
-                     'Test::Simple' => 0.44,
+                        'Test::Simple' => 0.44,
                     },
     EXE_FILES    => ['bin/zbx-notify'],
 );

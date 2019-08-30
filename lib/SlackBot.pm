@@ -24,7 +24,7 @@ sub new {
 
     my $web_api_url = $args->{web_api_url} || 'https://slack.com/api/';
     my $api_token = $args->{api_token}
-      || croak " Failed to create Slack bot - No token provided";
+        || croak " Failed to create Slack bot - No token provided";
     my $debug = $args->{debug} || 0;
     my $channel = $args->{channel};
 
@@ -70,19 +70,19 @@ sub post_message {
 
     #prepare color:
     $contents->{color} = choose_color($contents);
- 
+
     my $json_attach = $self->create_json_if_plain($contents);
 
     #Slack possible modes:
     # event - Notifications from Zabbix are posted in Slack in without any 'magic'
-    # alarm - When problem is resolved in Zabbix - notification is updated in Slack and then deleted. 
+    # alarm - When problem is resolved in Zabbix - notification is updated in Slack and then deleted.
     #         Acknowledgements are attached as replies to thread
     # alarm-no-delete - When problem is resolved in Zabbix - notification is updated in Slack but not deleted.
     #         Acknowledgements are attached as replies to thread
-    
+
 
     if (($contents->{slack}->{mode} eq 'alarm' or $contents->{slack}->{mode} eq 'alarm-no-delete')
-            and defined( $contents->{eventid} ) ) 
+            and defined( $contents->{eventid} ) )
     {
         #alarm recovery
         if ($contents->{status} eq 'OK'){
@@ -96,7 +96,7 @@ sub post_message {
             my $message;
             #here goes Slack threading
             $self->post_replyMessage($contents,$json_attach);
-            
+
         }
 
     }
@@ -171,12 +171,12 @@ sub post_replyMessage {
             print Dumper $mes_to_reply if $self->debug;
             #always use first [0] message found in store (thread start)
             my $message =
-                $self->chat_postMessage( { attachments => $json_attach,
-                                           thread_ts => $mes_to_reply->[0]->{ts} } );
+                $self->chat_postMessage( {  attachments => $json_attach,
+                                            thread_ts => $mes_to_reply->[0]->{ts} } );
             print "Storing event id...\n" if $self->{debug};
             store_message( $contents->{eventid}, $message );
         }
-        else 
+        else
         {
             print "Posting message\n";
             my $message = $self->chat_postMessage( { attachments => $json_attach} );
@@ -185,8 +185,8 @@ sub post_replyMessage {
             store_message( $contents->{eventid}, $message );
 
         }
-    }    
-    
+    }
+
 }
 
 sub chat_postMessage {
@@ -194,16 +194,16 @@ sub chat_postMessage {
     my $args = shift;
 
     my $channel =
-         $args->{channel}
-      || $self->channel
-      || die "Failed to postMessage: channel is required\n";
+        $args->{channel}
+        || $self->channel
+        || die "Failed to postMessage: channel is required\n";
 
     #required for replies in Slack
     my $thread_ts =
-         $args->{thread_ts};
+        $args->{thread_ts};
 
     my $json_attach = $args->{attachments}
-      || die "Failed to postMessage: no attachment is provided\n";
+        || die "Failed to postMessage: no attachment is provided\n";
 
     my $url = URI->new( $self->web_api_url . 'chat.postMessage' );
 
@@ -214,7 +214,7 @@ sub chat_postMessage {
         'as_user'     => 'true'
     );
     if ($thread_ts) {
-      $params{thread_ts}=$thread_ts;
+        $params{thread_ts}=$thread_ts;
     }
     $url->query_form(%params);
 
@@ -231,10 +231,10 @@ sub chat_updateMessage {
 
     my $ts = $args->{ts} || die "Failed to updateMessage: ts is required\n";
     my $channel = $args->{channel}
-      || die "Failed to updateMessage: channel is required\n";
+        || die "Failed to updateMessage: channel is required\n";
     my $text = $args->{text};
     my $json_attach = $args->{attachments}
-      || die "Failed to updateMessage: no attachment is provided\n";
+        || die "Failed to updateMessage: no attachment is provided\n";
 
     my $url = URI->new( $self->web_api_url . 'chat.update' );
     $url->query_form(
@@ -259,7 +259,7 @@ sub chat_deleteMessage {
 
     my $ts = $args->{ts} || die "Failed to deleteMessage: ts is required\n";
     my $channel = $args->{channel}
-      || die "Failed to deleteMessage: channel is required\n";
+        || die "Failed to deleteMessage: channel is required\n";
 
     my $url = URI->new( $self->web_api_url . 'chat.delete' );
     $url->query_form(
@@ -281,11 +281,11 @@ sub check_slack_response {
     my $response = shift;
 
     $self->last_err('') if $self->last_err ne '';    #delete prev error
-	
+
     if ( !$response->is_success ) {
         die "Error: ", $response->status_line . "\n";
     }
-	
+
     my $json_resp = JSON::XS->new->utf8->decode( $response->content );
 	print "Slack response is:\n".$response->content."\n" if $self->debug;
     if ( !$json_resp->{ok} ) {
@@ -314,11 +314,11 @@ sub store_message {
         ts      => $message->{ts},
         channel => $message->{channel}
     };
-    
+
 
     if ( -f $storage_file ) {
         $stored = lock_retrieve $storage_file;
-        
+
         push @{$stored->{$eventid}},$to_store;
         lock_store $stored, $storage_file;
     }
@@ -376,7 +376,7 @@ sub create_json_if_plain {
     my $json_hash;
     my $json_attach;
     eval {    #check if already JSON:
-    
+
         my $message = $self->zbx_macro_to_json($contents->{message});
         $json_hash = JSON::XS->new->decode( $message );
 
@@ -417,7 +417,7 @@ sub create_json_attach_only {
 
 
 sub choose_color {
-    
+
     my $contents = shift;
     my $color;
     if ($contents->{status} eq 'OK') { return '#CCFFCC'; }
@@ -445,7 +445,7 @@ sub get_with_retries {
     $ua->env_proxy;
     $ua->show_progress(1) if $self->debug;
 
-  ATTEMPT: {
+    ATTEMPT: {
 
         $response = $ua->get($url);
 
@@ -467,7 +467,7 @@ sub get_with_retries {
                 }
 
                 print $response->status_line . q{ }
-                  . "Will try again in $retry_after seconds\n";
+                    . "Will try again in $retry_after seconds\n";
 
                 sleep $retry_after;
 
@@ -483,10 +483,7 @@ sub get_with_retries {
             }
         }
     }
-
 }
-
-
 
 
 sub DESTROY { }

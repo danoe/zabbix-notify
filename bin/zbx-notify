@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 use warnings;
 use strict;
 use 5.010;
@@ -29,30 +29,32 @@ my $pagerduty;
 
 
 GetOptions(
-    "api_token=s" =>  \$api_token,
-    "debug!"       => \$debug,
-    "fork!"      =>   \$fork,
-    "ssl_verify_hostname!"   =>  \$ssl_verify_hostname,
-    
-    "hipchat"     =>            \$hipchat,
-    "hipchat_api_url=s" =>         \$hipchat_api_url,
-    "hipchat_message_format=s"         => \$contents{hipchat}->{message_format},
-    "hipchat_notify=s"       => \$contents{hipchat}->{notify},
-    "hipchat_from=s"       => \$contents{hipchat}->{from},
+    "api_token=s"               =>  \$api_token,
+    "debug!"                    =>  \$debug,
+    "fork!"                     =>  \$fork,
+    "ssl_verify_hostname!"      =>  \$ssl_verify_hostname,
 
-    "pagerduty"       => \$pagerduty,
-    "pagerduty_client=s"     => \$contents{pagerduty}->{client},
-    "pagerduty_client_url=s" => \$contents{pagerduty}->{client_url},
-    
-    "slack"     =>    \$slack,
-    "slack_mode=s"      =>  \$contents{slack}->{mode},
+    "hipchat"                   =>  \$hipchat,
+    "hipchat_api_url=s"         =>  \$hipchat_api_url,
+    "hipchat_message_format=s"  =>  \$contents{hipchat}->{message_format},
+    "hipchat_notify=s"          =>  \$contents{hipchat}->{notify},
+    "hipchat_from=s"            =>  \$contents{hipchat}->{from},
+
+    "pagerduty"                 =>  \$pagerduty,
+    "pagerduty_client=s"        =>  \$contents{pagerduty}->{client},
+    "pagerduty_client_url=s"    =>  \$contents{pagerduty}->{client_url},
+
+    "slack"                     =>  \$slack,
+    "slack_mode=s"              =>  \$contents{slack}->{mode},
+
 ) or die("Error in command line arguments\n");
+
 die "Please provide --slack --hipchat --pagerduty but only one\n"
-  unless defined($hipchat) xor defined($slack) xor defined($pagerduty);
+    unless defined($hipchat) xor defined($slack) xor defined($pagerduty);
+
 die "You must provide 'api_token'\n" unless $api_token;
 
-  
- 
+
 #get params (from,subject,message from zabbix notification)
 binmode STDOUT, ":encoding(UTF-8)";
 my $send_to = shift @ARGV or die "Invalid number of arguments\n";
@@ -60,12 +62,12 @@ my $send_to = shift @ARGV or die "Invalid number of arguments\n";
 $contents{subject} = shift @ARGV;
 utf8::decode( $contents{subject} );
 die "Subject provided is wrong\n"
-  unless $contents{subject} =~ m/^[[:print:]]+$/;    #subject
+    unless $contents{subject} =~ m/^[[:print:]]+$/;    #subject
 
 $contents{message} = shift @ARGV;
 utf8::decode( $contents{message} );
 die "Message provided is wrong\n"
-  unless $contents{message} =~ m/^( [[:print:]] | \t | \n | \r )+$/x;    #message
+    unless $contents{message} =~ m/^( [[:print:]] | \t | \n | \r )+$/x;    #message
 
 #parse contents to find something interesting (OK|PROBLEM, SEVERITY LEVEL...)
 %contents = ( %contents, parse_message( $contents{subject}.' '.$contents{message} ) );
@@ -78,14 +80,14 @@ if ($slack) {
 
 }
 elsif ($hipchat) {
-    $bot = HipChatBot->new({ 
+    $bot = HipChatBot->new({
         api_token => $api_token
         });
     $bot->web_api_url($hipchat_api_url) if $hipchat_api_url;
- 
+
     $bot->room($send_to);
     if ( defined($contents{hipchat}->{from}) ) {
-        utf8::decode( $contents{hipchat}->{from} ); 
+        utf8::decode( $contents{hipchat}->{from} );
         die "'from' provided is wrong\n"
             unless $contents{hipchat}->{from} =~ m/^[[:print:]]+$/;    #from
     }
@@ -130,7 +132,7 @@ sub parse_message {
     my $message = shift;
     my %result;
     $result{'status'} = 'PROBLEM';
-    given ($message) {   
+    given ($message) {
         when (/eventid: *(\d+)/i) { $result{'eventid'} = $1;        continue }
         when (/\bPROBLEM\b/)      { $result{'status'}  = 'PROBLEM'; continue }
         when (/\bOK\b/) {
@@ -148,7 +150,7 @@ sub parse_message {
 }
 
 
-sub set_ssl_verify_hostname{
+sub set_ssl_verify_hostname {
     if (defined($ssl_verify_hostname )){
         if($ssl_verify_hostname == 0) {
             $ENV{'PERL_LWP_SSL_VERIFY_HOSTNAME'} = 0;
@@ -158,8 +160,5 @@ sub set_ssl_verify_hostname{
             $ENV{'PERL_LWP_SSL_VERIFY_HOSTNAME'} = 1;
             print "setting PERL_LWP_SSL_VERIFY_HOSTNAME to $ssl_verify_hostname\n" if $debug;
         }
-        
     }
 }
-
-
